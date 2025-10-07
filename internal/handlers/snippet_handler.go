@@ -136,3 +136,18 @@ func (sh *SnippetHandler) HandleUpdateSnippet(w http.ResponseWriter, r *http.Req
 
 	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"data": updatedSnippet, "message": "Snippet updated successfully!"})
 }
+
+func (sh *SnippetHandler) HandleSearchSnippets(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("userID")
+	title := r.URL.Query().Get("title")
+	language := r.URL.Query().Get("language")
+
+	snippets, err := sh.snippetStore.SearchSnippets(title, language, userID.(int))
+	if err != nil {
+		sh.logger.Printf("Error searching snippets %v\n", err)
+		utils.WriteJSON(w, http.StatusInternalServerError, utils.Envelope{"error": "Internal server error!"})
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, utils.Envelope{"data": snippets})
+}

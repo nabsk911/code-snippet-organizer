@@ -17,6 +17,7 @@ func SetupRoutes(app *app.Application) *http.ServeMux {
 	router.HandleFunc("GET /snippets", middleware.Authentication(app.SnippetHandler.HandleGetSnippetsByUserID))
 	router.HandleFunc("DELETE /snippets/{id}", middleware.Authentication(app.SnippetHandler.HandleDeleteSnippet))
 	router.HandleFunc("PUT /snippets/{id}", middleware.Authentication(app.SnippetHandler.HandleUpdateSnippet))
+	router.HandleFunc("GET /snippets/search", middleware.Authentication(app.SnippetHandler.HandleSearchSnippets))
 
 	return router
 }

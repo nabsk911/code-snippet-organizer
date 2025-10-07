@@ -1,8 +1,8 @@
 /*
-	TODO:
-
+TODO:
 1. Add validation method for username and password.
 2. Improve response messages
+
 */
 
 package handlers

@@ -31,6 +31,7 @@ type SnippetStore interface {
 	GetSnippetsByUserID(userID int) ([]*Snippet, error)
 	DeleteSnippet(snippetID int) error
 	UpdateSnippet(snippet *Snippet) (*Snippet, error)
+	SearchSnippets(string, string, int) ([]*Snippet, error)
 }
 
 func (pg *PostgresSnippetStore) CreateSnippet(snippet *Snippet) (*Snippet, error) {
@@ -88,6 +89,39 @@ func (pg *PostgresSnippetStore) UpdateSnippet(snippet *Snippet) (*Snippet, error
 		WHERE id = $5
   	RETURNING id, title, description, code, language, user_id, created_at, updated_at
 	`
-	err := pg.db.QueryRow(query, snippet.Title, snippet.Description, snippet.Code, snippet.Language, snippet.ID).Scan(&snippet.ID, &snippet.Title, &snippet.Description, &snippet.Code, &snippet.Language, &snippet.UserID, &snippet.CreatedAt, &snippet.UpdatedAt)
+	err := pg.db.QueryRow(query, snippet.Title, snippet.Description, snippet.Code, snippet.Language, snippet.ID).Scan(&snippet.ID, &snippet.Title, &snippet.Description, &snippet.Code, &snippet.Language, &snippet.CreatedAt, &snippet.UpdatedAt)
 	return snippet, err
+}
+
+func (pg *PostgresSnippetStore) SearchSnippets(title string, language string, userID int) ([]*Snippet, error) {
+	query := `
+  	SELECT id, title, description, code, language, user_id, created_at, updated_at
+		FROM snippets
+		WHERE user_id = $1
+			AND ($2 = '' OR title ILIKE '%' || $2 || '%')
+			AND ($3 = '' OR LOWER(language) = LOWER($3))
+	`
+
+	rows, err := pg.db.Query(query, userID, title, language)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var snippets []*Snippet
+
+	for rows.Next() {
+		snippet := &Snippet{}
+		err := rows.Scan(&snippet.ID, &snippet.Title, &snippet.Description,
+			&snippet.Code, &snippet.Language, &snippet.UserID,
+			&snippet.CreatedAt, &snippet.UpdatedAt)
+
+		if err != nil {
+			return nil, err
+		}
+
+		snippets = append(snippets, snippet)
+	}
+
+	return snippets, nil
 }
